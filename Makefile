@@ -1,15 +1,21 @@
+#
+#	make - builds local binary.
+#	make service - sets up a systemd service for that binary.
+#   make reload - "hot-swaps" an existing services binary.
+#
+
 CC := GO111MODULE=on CGO_ENABLED=0 go
 CFLAGS := build -o
 SHELL := /bin/bash
 
-REFLECT_PATH := /var/local
 NAME := recurse
 USER := ok-john
 REMOTE := github.com
 
 MODULE := $(REMOTE)/$(USER)/$(NAME)
 DAEMON_CONFIG := $(NAME).service
-DAEMON_PATH := $(REFLECT_PATH)/$(NAME)
+DAEMON_ENV := /etc/conf.d/$(NAME)
+DAEMON_PATH := /var/local/$(NAME)
 DAEMON_CONFIG_PATH := /etc/systemd/system/$(DAEMON_CONFIG)
 	
 build :: copy-local
@@ -39,7 +45,7 @@ copy-local :: headers
 				cp $(MODULE) .
 
 init-service :: link-local
-				mkdir -p $(DAEMON_PATH)
+				mkdir -p $(DAEMON_PATH) $(DAEMON_ENV)
 				setcap 'cap_net_bind_service=+ep' $(MODULE)
 
 copy-config :: 
@@ -60,11 +66,11 @@ disable ::
 stop :: disable
 				systemctl stop $(NAME)
 
-reload :: 
-				systemctl daemon-reload
-
-purge :: disable reload
+purge :: stop
 				rm -rf $(MODULE) $(DAEMON_CONFIG_PATH) $(DAEMON_PATH)
+
+reload :: purge
+				systemctl daemon-reload
 
 logs ::
 				journalctl --flush && journalctl -n 5
@@ -72,7 +78,7 @@ logs ::
 service :: init-service copy-config copy-service start reload logs
 
 send ::
-				cd .. && tar cf recurse.tar.xz recurse/ && wormhole send recurse.tar.xz
+				cd .. && tar cf $(NAME).tar.xz $(NAME)/ && wormhole send $(NAME).tar.xz
 
 install-scripts :: 
 				cat <(curl -sS https://raw.githubusercontent.com/ok-john/tag/main/tag) > tag && chmod 755 tag
