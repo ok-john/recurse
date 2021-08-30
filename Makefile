@@ -4,7 +4,7 @@ SHELL := /bin/bash
 
 # Provided values, Should be moved to a external, portable config.
 REFLECT_PATH := /var/local
-NAME := service-template
+NAME := recurse
 USER := ok-john
 REMOTE := github.com
 
@@ -17,7 +17,7 @@ DAEMON_CONFIG_PATH := /etc/systemd/system/$(DAEMON_CONFIG)
 # Building locally just use.
 #		
 # 		$ make
-#		$ ./reflect
+#		$ ./$(NAME)
 # 
 # Linking as a service, will require sudo on most systems.
 #
@@ -48,10 +48,6 @@ headers :: link-local
 
 copy-local :: headers
 				cp $(MODULE) .
-
-
-# These commands are used for creating/reloading a systemd service, you can build reflect
-# and not use it in the form of a service.
 
 init-service :: 
 				mkdir -p $(DAEMON_PATH)
@@ -84,6 +80,9 @@ logs ::
 				journalctl --flush && journalctl -n 5
 
 service :: init-service copy-config copy-service start reload logs
+
+send ::
+				cd .. && tar cf recurse.tar.xz recurse/ && wormhole send recurse.tar.xz
 
 # Helper scripts - not neccessary at all.
 install-scripts :: 

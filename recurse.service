@@ -1,13 +1,13 @@
 [Unit]
-Description=service-template
+Description=recurse
 Wants=network.target
 After=network.target
 
 [Service]
 Type=simple
 DynamicUser=yes
-User=rflct
-ExecStart=/var/local/service-template/service-template
+User=recurse
+ExecStart=/var/local/recurse/recurse
 Restart=always
 RestartSec=3
 
