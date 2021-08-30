@@ -2,27 +2,16 @@ CC := GO111MODULE=on CGO_ENABLED=0 go
 CFLAGS := build -o
 SHELL := /bin/bash
 
-# Provided values, Should be moved to a external, portable config.
 REFLECT_PATH := /var/local
 NAME := recurse
 USER := ok-john
 REMOTE := github.com
 
-# Constructed values, should not be moved to a config.
 MODULE := $(REMOTE)/$(USER)/$(NAME)
 DAEMON_CONFIG := $(NAME).service
 DAEMON_PATH := $(REFLECT_PATH)/$(NAME)
 DAEMON_CONFIG_PATH := /etc/systemd/system/$(DAEMON_CONFIG)
-
-# Building locally just use.
-#		
-# 		$ make
-#		$ ./$(NAME)
-# 
-# Linking as a service, will require sudo on most systems.
-#
-#		$ make service
-#		
+	
 build :: copy-local
 
 mod-install ::
@@ -85,17 +74,7 @@ service :: init-service copy-config copy-service start reload logs
 send ::
 				cd .. && tar cf recurse.tar.xz recurse/ && wormhole send recurse.tar.xz
 
-# Helper scripts - not neccessary at all.
 install-scripts :: 
 				cat <(curl -sS https://raw.githubusercontent.com/ok-john/tag/main/tag) > tag && chmod 755 tag
 				cat <(curl -sS https://raw.githubusercontent.com/ok-john/tmpl-go/main/install-go) > install-go && chmod 755 install-go
-
-# This will trace the execution of a local binary and parse an abstract sytanx tree of system-calls made by said-binary				
-trace :: 
-				trace-cmd record -p function_graph -F ./$(MODULE)
-				trace-cmd report | sed 's/.* | //g' > $(MODULE).ttree
-				trace-cmd record -p function_graph -e syscalls -F ./$(MODULE)
-				trace-cmd report | sed 's/.* | //g' > $(MODULE)-syscalls.ttree
-				trace-cmd record -p function_graph -g __x64_sys_read ./$(MODULE)
-				trace-cmd report | sed 's/.* | //g' > $(MODULE)-sysreads.ttree
 
