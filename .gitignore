@@ -13,7 +13,7 @@ install-go
 tag
 
 # Main executable
-reflect
+recurse
 
 # Local build directory
 /github.com/*
