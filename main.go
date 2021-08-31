@@ -98,18 +98,11 @@ func ega(w http.ResponseWriter, req *http.Request) {
 }
 
 func pairEncoded(_u *age.X25519Identity) ([]byte, []byte) {
-	c := lib.Context("created")
 	return pem.EncodeToMemory(&pem.Block{
-			Headers: map[string]string{
-				"t": c,
-			},
 			Type:  AGE_PK_HEADER,
 			Bytes: []byte(_u.String()),
 		}),
 		pem.EncodeToMemory(&pem.Block{
-			Headers: map[string]string{
-				"t": c,
-			},
 			Type:  AGE_SK_HEADER,
 			Bytes: []byte(_u.Recipient().String()),
 		})
@@ -142,7 +135,6 @@ func PEMDecodeIdentity(f *os.File) (*age.X25519Identity, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	blocc, _ := pem.Decode(t)
 	s := string(blocc.Bytes)
 	_id, err := age.ParseX25519Identity(s)
@@ -158,7 +150,6 @@ func PEMDecodeRecipiant(f *os.File) (*age.X25519Recipient, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	blocc, _ := pem.Decode(t)
 	_id, err := age.ParseX25519Recipient(string(blocc.Bytes))
 	if err != nil {
