@@ -8,17 +8,23 @@
         |_|  \_\______\_____|\____/|_|  \_\_____/|______|
 
 
-
-
-        temporarily available at https://1o.fyi
-
-         
-        added a generative function for obtaining test values
+         temporarily available at https://1o.fyi
         
-        $ curl https://1o.fyi/gen
-         
+         $ curl https://1o.fyi/age
         
-        -----BEGIN Universe-v0.4.1-----
+         -----BEGIN AGEv1 PRIVATE KEY-----
+         QUdFLVNFQ1JFVC1LRVktMUpONzhKRURUVTlLUzVYNk1TNFYyN0NOM1VITDhNWkxW
+         NlI5V1JaSllNWDVYRUxQMDJUQ1NXN1FIUFc=
+         -----END AGEv1 PRIVATE KEY-----
+
+         -----BEGIN AGEv1 PUBLIC KEY-----
+         YWdlMXgyODd6MGUybjlmZXBjOHduanU0d2FsOXBzMnhrd3c5a3hoYWp0bDN2aDhn
+         ajRucXA5dXF3Nnlwd3k=
+         -----END AGEv1 PUBLIC KEY-----
+         
+         $ curl https://1o.fyi/gen
+        
+         -----BEGIN Universe-v0.4.1-----
          hash: BLAKE3
          probability: 1.00000000000000000000000000000000
          size: g
