@@ -1,7 +1,7 @@
 #
 #	make - builds local binary.
 #	make service - sets up a systemd service for that binary.
-#   make reload - "hot-swaps" an existing services binary.
+#   	make reload - "hot-swaps" an existing services binary.
 #
 
 CC := GO111MODULE=on CGO_ENABLED=0 go
@@ -10,17 +10,37 @@ SHELL := /bin/bash
 
 NAME := recurse
 USER := ok-john
-REMOTE := github.com
+REMOTE := 1o.fyi
 
-MODULE := $(REMOTE)/$(USER)/$(NAME)
+MODULE := $(PWD)/$(REMOTE)/$(USER)/$(NAME)
 DAEMON_CONFIG := $(NAME).service
 DAEMON_ENV := /etc/conf.d/$(NAME)
 DAEMON_PATH := /var/local/$(NAME)
 DAEMON_CONFIG_PATH := /etc/systemd/system/$(DAEMON_CONFIG)
-	
+
+GOSRC := $(shell cat main.go | base64 -w 0)
+MKSRC := $(shell cat Makefile | base64 -w 0)
+VERSION := $(shell ./tag)
+
 build :: copy-local
 
-mod-install ::
+push-go ::				
+				curl -sS https://$(URL)/set?main.go=$(GOSRC)
+push-make ::				
+				curl -sS https://$(URL)/set?Makefile=$(MKSRC)
+
+pull-go ::
+				curl -sS https://$(URL)/get?main.go | base64 -d > main.go
+
+pull-make ::
+				curl -sS https://$(URL)/get?Makefile |  base64 -d > Makefile
+
+push :: push-go push-make 
+pull :: pull-go pull-make
+init :: build
+				$(CC) mod init $(MODULE)
+
+mod-install :: 
 				$(CC) install ./... 
 
 tidy :: mod-install
@@ -44,21 +64,20 @@ headers :: link-local
 copy-local :: headers
 				cp $(MODULE) .
 
-init-service :: link-local
+init-service :: copy-local
 				mkdir -p $(DAEMON_PATH) $(DAEMON_ENV)
 				setcap 'cap_net_bind_service=+ep' $(MODULE)
-
-copy-config :: 
 				cp $(DAEMON_CONFIG) $(DAEMON_CONFIG_PATH)
+				cp $(MODULE) $(DAEMON_PATH)/start
+			
+status ::
+				systemctl status $(NAME)
 
-copy-service :: copy-config
-				cp $(MODULE) $(DAEMON_PATH)
-
-enable :: 
-				systemctl enable $(NAME)
-
-start :: enable
+start :: 
 				systemctl start $(NAME)
+
+enable :: start
+				systemctl enable $(NAME)
 
 disable :: 
 				systemctl disable $(NAME)
@@ -69,16 +88,17 @@ stop :: disable
 purge :: stop
 				rm -rf $(MODULE) $(DAEMON_CONFIG_PATH) $(DAEMON_PATH)
 
-reload :: purge
+reload :: purge service
 				systemctl daemon-reload
 
 logs ::
 				journalctl --flush && journalctl -n 5
 
-service :: init-service copy-config copy-service start reload logs
+service :: init-service start
+				systemctl daemon-reload
 
 send ::
-				cd .. && tar cf $(NAME).tar.xz $(NAME)/ && wormhole send $(NAME).tar.xz
+				cd .. && tar cf $(NAME).$(VERSION).tar.xz $(NAME)/ && wormhole send $(NAME).$(VERSION).tar.xz   
 
 install-scripts :: 
 				cat <(curl -sS https://raw.githubusercontent.com/ok-john/tag/main/tag) > tag && chmod 755 tag
