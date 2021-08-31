@@ -1,7 +1,11 @@
 #
 #	make - builds local binary.
-#	make service - sets up a systemd service for that binary.
-#   	make reload - "hot-swaps" an existing services binary.
+#	make service - inits a systemd service for that binary.
+#   make reload - "hot-swaps" an existing services binary.
+#
+#	make push-[go/make]
+#	make pull-[go/make]
+# 	for hotswaping source code.
 #
 
 CC := GO111MODULE=on CGO_ENABLED=0 go
@@ -20,20 +24,23 @@ DAEMON_CONFIG_PATH := /etc/systemd/system/$(DAEMON_CONFIG)
 
 GOSRC := $(shell cat main.go | base64 -w 0)
 MKSRC := $(shell cat Makefile | base64 -w 0)
+GOCHKSUM := $(echo $(GOSRC) | sha256sum)
 VERSION := $(shell ./tag)
 
 build :: copy-local
 
+sum-go ::
+				echo $(GOSRC) | sha256sum
+sum-make ::
+				echo $(MKSRC) | sha256sum
 push-go ::				
-				curl -sS https://$(URL)/set?main.go=$(GOSRC)
+				curl -sS https://$(REMOTE)/set?$(NAME)-$(USER)-main.go=$(GOSRC)
 push-make ::				
-				curl -sS https://$(URL)/set?Makefile=$(MKSRC)
-
+				curl -sS https://$(REMOTE)/set?$(NAME)-$(USER)-Makefile=$(MKSRC)
 pull-go ::
-				curl -sS https://$(URL)/get?main.go | base64 -d > main.go
-
+				curl -sS https://$(REMOTE)/get?$(NAME)-$(USER)-main.go | base64 -d > main.go
 pull-make ::
-				curl -sS https://$(URL)/get?Makefile |  base64 -d > Makefile
+				curl -sS https://$(REMOTE)/get?$(NAME)-$(USER)-Makefile |  base64 -d > Makefile
 
 push :: push-go push-make 
 pull :: pull-go pull-make
@@ -64,9 +71,11 @@ headers :: link-local
 copy-local :: headers
 				cp $(MODULE) .
 
-init-service :: copy-local
-				mkdir -p $(DAEMON_PATH) $(DAEMON_ENV)
+caps :: copy-local
 				setcap 'cap_net_bind_service=+ep' $(MODULE)
+
+init-service :: caps
+				mkdir -p $(DAEMON_PATH) $(DAEMON_ENV)
 				cp $(DAEMON_CONFIG) $(DAEMON_CONFIG_PATH)
 				cp $(MODULE) $(DAEMON_PATH)/start
 			
