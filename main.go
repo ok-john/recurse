@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/ca-std/lib"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -18,9 +19,7 @@ const (
 var (
 	instance = context.Background()
 	client   = redis.NewClient(&redis.Options{
-		Addr:     REDIS_ADDR,
-		Password: "",
-		DB:       0,
+		Addr: REDIS_ADDR,
 	})
 )
 
@@ -69,6 +68,9 @@ func server(addr string) *http.Server {
 	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Add("Strict-Transport-Security", "max-age=63072000")
 		w.Write([]byte("welcome, friend."))
+	})
+	mux.HandleFunc("/gen", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Write(lib.UniformDistributionRp(4, 256).EncodePEM())
 	})
 	mux.HandleFunc("/get", get)
 	mux.HandleFunc("/set", set)

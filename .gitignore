@@ -16,5 +16,6 @@ tag
 recurse
 
 # Local build directory
-/github.com/*
+/1o.fyi/*
+
 
