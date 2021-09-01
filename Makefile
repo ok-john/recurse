@@ -1,7 +1,7 @@
 #
 #	make - builds local binary.
 #	make service - inits a systemd service for that binary.
-#   make reload - "hot-swaps" an existing services binary.
+#   	make reload - "hot-swaps" an existing services binary.
 #
 #	make push-[go/make]
 #	make pull-[go/make]
